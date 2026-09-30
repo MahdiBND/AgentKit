@@ -1,0 +1,5 @@
+To add Redis or SQL sessions later, write a class with load(session_id) and save(session_id, messages) and pass it as session_store=. Agent doesn't change.
+
+- Backends: memory is the default and needs no extra packages. chroma is built in (`pip install agentkit[chroma]`, then set `VECTOR_BACKEND=chroma` and optionally `CHROMA_PATH` for persistence). For pgvector, Qdrant or anything else, call `register_backend("name", factory)` with a function (embeddings, name) -> VectorStore.
+- Caching: `get_vector_store("docs")` returns the same instance every time, so the in-memory store keeps its contents across calls. Different names give separate collections.
+- `retriever_tool`: it returns a LangChain tool with both sync and async versions, so it works with invoke and ainvoke. It returns numbered passages, or "No relevant results found." when there are none.

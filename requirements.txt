@@ -1,0 +1,11 @@
+langchain
+langchain-core
+langchain-openai
+langchain-google-genai
+google-genai
+langfuse
+httpx
+python-dotenv
+
+# optional: persistent vector store (VECTOR_BACKEND=chroma)
+# langchain-chroma
