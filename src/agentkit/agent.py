@@ -1,45 +1,16 @@
 import time
-from functools import lru_cache
-from typing import Any, Sequence, AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator
+from typing import Any, Sequence
 
 from langchain.agents import create_agent
 from langchain_core.messages import BaseMessage, HumanMessage
-from langchain_openai import ChatOpenAI
 
-from .getenv import get_api_key, get_env
 from .log import logger
-from .relay import get_async_http_client, get_http_client
+from .messages import message_text
+from .models import get_model
 from .sessions import SessionStore
-from .tracing import get_callbacks, trace_metadata
-from .stream import StreamEvent, _StreamState
-
-GEMINI_OPENAI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-
-
-def _build_model(model: str = "gemini-3.6-flash", **settings: Any) -> ChatOpenAI:
-    """Build the chat model. `settings` are ChatOpenAI kwargs (temperature, top_p, ...)."""
-    return ChatOpenAI(
-        model=get_env("LLM_MODEL", model),  # type: ignore[arg-type]
-        api_key=get_api_key("GOOGLE"),  # type: ignore[arg-type]
-        base_url=GEMINI_OPENAI_URL,
-        http_client=get_http_client(),
-        http_async_client=get_async_http_client(),
-        **settings,
-    )
-
-
-@lru_cache(maxsize=1)
-def get_model(name: str = "gemini-3.6-flash") -> ChatOpenAI:
-    return _build_model(model=name)
-
-
-def _text(message: BaseMessage) -> str:
-    text = message.text
-    if isinstance(text, str):
-        return str(text)
-    if callable(text):
-        text = text()
-    return text if isinstance(text, str) else str(message.content)
+from .streaming import StreamEvent, StreamState
+from .tracing import build_config
 
 
 class Agent:
@@ -65,17 +36,17 @@ class Agent:
         model_settings: ChatOpenAI kwargs, e.g. {"temperature": 0.2, "top_p": 0.9}.
                         Only applies to the default model.
         """
+        if model is not None and model_settings:
+            raise ValueError(
+                "model_settings only applies to the default model; "
+                "configure your own model instead"
+            )
 
-        _model = (
-            _build_model(model=model, **model_settings)
-            if model_settings
-            else get_model(name=model)
-        )
         self.name = name
         self.sessions = session_store
         self.output_type = output_type
         self.graph = create_agent(
-            model=_model,
+            model=get_model(name=model, **(model_settings or {})),
             system_prompt=instructions,
             tools=list(tools or []),
             response_format=output_type,
@@ -93,14 +64,12 @@ class Agent:
                 history = self.sessions.load(session_id)
         return [*history, HumanMessage(text)]
 
-    def _config(self, session_id, user_id, config) -> dict:
-        cfg = dict(config or {})
-        cfg["callbacks"] = [*cfg.get("callbacks", []), *get_callbacks()]
-        cfg["metadata"] = {
-            **trace_metadata(session_id, user_id, [self.name]),
-            **cfg.get("metadata", {}),
-        }
-        return cfg
+    def _config(
+        self, session_id: str | None, user_id: str | None, config: dict | None
+    ) -> dict:
+        return build_config(
+            config, session_id=session_id, user_id=user_id, tags=[self.name]
+        )
 
     def _save(
         self, session_id: str | None, messages: list[BaseMessage], started: float
@@ -119,7 +88,7 @@ class Agent:
         self._save(session_id, messages, started)
         if self.output_type is not None:
             return result["structured_response"]
-        return _text(messages[-1])
+        return message_text(messages[-1])
 
     # -- public API ------------------------------------------------------
     def invoke(
@@ -175,7 +144,7 @@ class Agent:
             return
 
         started = time.time()
-        state = _StreamState(self._messages(text, session_id))
+        state = StreamState(self._messages(text, session_id))
         for mode, data in self.graph.stream(
             {"messages": list(state.messages)},
             config=self._config(session_id, user_id, config),
@@ -204,7 +173,7 @@ class Agent:
             return
 
         started = time.time()
-        state = _StreamState(self._messages(text, session_id))
+        state = StreamState(self._messages(text, session_id))
         async for mode, data in self.graph.astream(
             {"messages": list(state.messages)},
             config=self._config(session_id, user_id, config),
