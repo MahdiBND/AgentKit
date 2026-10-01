@@ -23,7 +23,8 @@ class Agent:
         self,
         instructions: str,
         *,
-        model: str = "gemini-3.6-flash",
+        model: Any | None = None,
+        model_name: str = "gemini-3.6-flash",
         tools: Sequence[Any] | None = None,
         output_type: type | None = None,
         model_settings: dict[str, Any] | None = None,
@@ -46,7 +47,7 @@ class Agent:
         self.sessions = session_store
         self.output_type = output_type
         self.graph = create_agent(
-            model=get_model(name=model, **(model_settings or {})),
+            model=model or get_model(model=model_name, **(model_settings or {})),
             system_prompt=instructions,
             tools=list(tools or []),
             response_format=output_type,
