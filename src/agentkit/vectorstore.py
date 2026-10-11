@@ -4,6 +4,7 @@ Backends are pluggable: the default is in-memory (no extra deps). Add your own w
 `register_backend("pgvector", factory)`, where factory(embeddings, name) -> VectorStore.
 Select with `get_vector_store(backend=...)` or the VECTOR_BACKEND env var.
 """
+
 from collections.abc import Callable
 from functools import lru_cache
 
@@ -32,6 +33,8 @@ def _chroma(embeddings: Embeddings, name: str) -> VectorStore:
     )
 
 
+## TODO: add postgres (and supabase if possible)
+
 _BACKENDS: dict[str, BackendFactory] = {"memory": _memory, "chroma": _chroma}
 
 
@@ -45,7 +48,9 @@ def get_vector_store(name: str = "default", backend: str | None = None) -> Vecto
     """Same (name, backend) always returns the same store instance."""
     backend = backend or get_env("VECTOR_BACKEND", "memory")  # type: ignore[assignment]
     if backend not in _BACKENDS:
-        raise ValueError(f"Unknown vector backend '{backend}'. Available: {sorted(_BACKENDS)}")
+        raise ValueError(
+            f"Unknown vector backend '{backend}'. Available: {sorted(_BACKENDS)}"
+        )
     logger.info("vectorstore: name=%s backend=%s", name, backend)
     return _BACKENDS[backend](get_embeddings(), name)
 

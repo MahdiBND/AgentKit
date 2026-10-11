@@ -7,5 +7,6 @@ langfuse
 httpx
 python-dotenv
 
-# optional: persistent vector store (VECTOR_BACKEND=chroma)
+# optional: persistent vector store (VECTOR_BACKEND=chroma or postgres)
 # langchain-chroma
+# langchain-postgres
