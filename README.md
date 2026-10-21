@@ -43,7 +43,7 @@ agentkit reads a `.env` file from the directory you run your app in (walking upw
 | `LOG_LEVEL` | no | Used by `configure_logging()` (default `INFO`) |
 | `VECTOR_BACKEND` | no | `memory` (default) or `chroma` |
 | `CHROMA_PATH` | no | Persist directory for Chroma; unset = in-memory |
-| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` | no | Tracing is enabled when both keys are set |
+| `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` | no | Tracing is enabled when both keys are set |
 
 Missing required values fail immediately, with a clear message, when you create an agent or client.
 
