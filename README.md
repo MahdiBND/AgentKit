@@ -1,4 +1,4 @@
-# agentkit
+# Agentkit
 
 A small base library for LLM apps, so you don't have to set up LangChain, agents, networking, a relay, env loading, tracing and embeddings from scratch every time.
 
@@ -21,7 +21,7 @@ uv add agentkit
 From git:
 
 ```bash
-uv add git+https://github.com/<you>/agentkit
+uv add git+https://github.com/MahdiBND/AgentKit
 ```
 
 Optional extra for a persistent vector store:
