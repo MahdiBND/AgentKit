@@ -24,7 +24,7 @@ class Agent:
         instructions: str,
         *,
         model: Any | None = None,
-        model_name: str = "gemini-3.6-flash",
+        model_name: str = "google_genai:gemini-3.6-flash",
         tools: Sequence[Any] | None = None,
         output_type: type | None = None,
         model_settings: dict[str, Any] | None = None,
@@ -48,8 +48,8 @@ class Agent:
         self.output_type = output_type
         self.graph = create_agent(
             model=model or get_model(model=model_name, **(model_settings or {})),
-            system_prompt=instructions,
             tools=list(tools or []),
+            system_prompt=instructions,
             response_format=output_type,
         )
 
@@ -188,7 +188,7 @@ class Agent:
 
 def new_agent(instructions: str, **kwargs: Any) -> Agent:
     """Options are\n
-    `model`: str = "gemini-3.6-flash"\n
+    `model`: str = "google_genai:gemini-3.6-flash"\n
     `tools`: Sequence[Any] | None = None\n
     `output_type`: type | None = None\n
     `model_settings`: dict[str, Any] | None = None\n
