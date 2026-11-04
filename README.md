@@ -32,7 +32,7 @@ uv add "agentkit[chroma]"
 
 ## Configure
 
-agentkit reads a `.env` file from the directory you run your app in (walking upward), or plain environment variables. Copy `.env.example` to get started.
+agentkit reads a `.env` file from the directory you run your app in (walking upward), or plain environment variables. Copy `env.example` to get started.
 
 | Variable | Required | Purpose |
 |---|---|---|
@@ -86,13 +86,13 @@ agent.invoke("print one")   # -> CodeResponse(code="print(1)")
 
 ### Model and model settings
 
-Each agent can use its own model: a small, cheap one for exploring files, a big one for planning.
+Each agent can use its own model: a small, cheap one for exploring files, a big one for planning. different providers.
 
 ```python
-from agentkit import new_agent, get_model
+from agentkit import new_agent
 
-explorer = new_agent("Explore the directory.", model=get_model(model="<small-model>"))
-planner  = new_agent("Write a detailed plan.", model=get_model(model="<big-model>"))
+explorer = new_agent("Explore the directory.", model="openai:gpt-4o")
+planner  = new_agent("Write a detailed plan.", model="google_genai:gemini-3.7")
 ```
 
 Resolution order for the model name: the `model=` you pass in code, then `LLM_MODEL`, then the built-in default.
@@ -222,6 +222,7 @@ agent.invoke("hi", session_id="u1", user_id="sam")
 src/agentkit/
   getenv.py       env + .env loading
   relay.py        HTTP clients that route through the relay
+  relay_registry  register providers that need relay (gemini is registered by default)
   models.py       chat model construction (get_model)
   embed.py        embeddings (langchain-google-genai, via the relay)
   vectorstore.py  vector store backends + retriever tool
